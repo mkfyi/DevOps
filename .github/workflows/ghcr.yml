@@ -32,6 +32,16 @@ on:
         type: boolean
         default: true
 
+      username:
+        required: false
+        type: string
+        default: ${{ github.actor }}
+
+      password:
+        required: false
+        type: string
+        default: ''
+
       push:
         required: false
         type: boolean
@@ -48,8 +58,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ inputs.username }}
+          password: ${{ inputs.password != '' && inputs.password || secrets.GITHUB_TOKEN }}
         if: ${{ inputs.push || inputs.login }}
 
       - name: 🏗️ setup repository
