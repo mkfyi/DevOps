@@ -37,7 +37,7 @@ on:
         type: string
         default: ${{ github.actor }}
 
-      password:
+      token:
         required: false
         type: string
         default: ''
@@ -59,7 +59,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ inputs.username }}
-          password: ${{ inputs.password != '' && inputs.password || secrets.GITHUB_TOKEN }}
+          password: ${{ inputs.token != '' && inputs.token || secrets.GITHUB_TOKEN }}
         if: ${{ inputs.push || inputs.login }}
 
       - name: 🏗️ setup repository
