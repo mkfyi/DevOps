@@ -1,0 +1,10 @@
+FROM archlinux:base-devel
+
+RUN pacman --noconfirm -Sy\
+    && pacman --noconfirm -S \
+        clang \
+        cmake \
+        git \
+        llvm
+
+CMD ["bash"]

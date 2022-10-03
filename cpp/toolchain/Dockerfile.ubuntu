@@ -1,0 +1,88 @@
+ARG UBUNTU_VERSION=22.04
+
+FROM ubuntu:${UBUNTU_VERSION} AS base
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get -y update \
+    && apt-get -y install locales  \
+    && localedef \
+        -i en_US \
+        -c \
+        -f UTF-8 \
+        -A /usr/share/locale/locale.alias en_US.UTF-8
+
+ENV LC_ALL='en_US.UTF-8' \
+    LANG='en_US.UTF-8'
+
+FROM base AS builder
+
+WORKDIR /llvm-project
+
+RUN apt-get -y update \
+    && apt-get -y install --no-install-recommends \
+            cmake \
+            gcc \
+            g++ \
+            git \
+            make \
+            python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG LLVM_VERSION_MAJOR=14 \
+    LLVM_VERSION_MINOR=0 \
+    LLVM_VERSION_PATCH=6
+
+ARG LLVM_VERSION="${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}"
+
+RUN GIT_SSL_NO_VERIFY=1 git clone \
+        --depth 1 \
+        --branch "llvmorg-${LLVM_VERSION}" \
+        "https://github.com/llvm/llvm-project" . \
+    && mkdir -p build vendor \
+    && cd build \
+    && cmake  \
+        -DCMAKE_BUILD_TYPE=MinSizeRel \
+        -DLLVM_PARALLEL_COMPILE_JOBS=20 \
+        -DLLVM_PARALLEL_LINK_JOBS=20 \
+        -DLLVM_ENABLE_PROJECTS='clang;lld;compiler-rt'\
+        -DCMAKE_INSTALL_PREFIX='/llvm-project/vendor' \
+        -DLLVM_BUILD_DOCS=OFF \
+        -DLLVM_BUILD_LLVM_DYLIB=ON \
+        -DLLVM_BUILD_TESTS=OFF \
+        -DLLVM_ENABLE_BINDINGS=OFF \
+        -DLLVM_ENABLE_FFI=ON \
+        -DLLVM_ENABLE_RTTI=ON \
+        -DLLVM_ENABLE_SPHINX=OFF \
+        -DLLVM_INSTALL_UTILS=ON \
+        -DLLVM_LINK_LLVM_DYLIB=ON \
+        -DLLVM_USE_PERF=ON \
+        -G "Unix Makefiles" \
+        ../llvm \
+    && make -j"$(nproc --all)" \
+    && make install
+
+FROM base AS production
+
+RUN apt-get -y update \
+    && apt-get -y install --no-install-recommends \
+            cmake \
+            gcc \
+            g++ \
+            git \
+            make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root/llvm-project
+
+COPY --from=builder /llvm-project/vendor/ ./
+
+WORKDIR /root
+
+RUN mv llvm-project/bin/* /usr/local/bin \
+    && mv llvm-project/share/* /usr/local/share \
+    && mv llvm-project/include/* /usr/local/include \
+    && mv llvm-project/lib/* /usr/local/lib \
+    && rm -rf /root/llvm-project
+
+CMD ["bash"]
