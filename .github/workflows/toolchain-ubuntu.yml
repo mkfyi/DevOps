@@ -1,0 +1,13 @@
+name: Ubuntu
+
+on:
+  push:
+    paths:
+      - 'cpp/toolchain/Dockerfile.ubuntu'
+
+jobs:
+  toolchain:
+    uses: ./.github/workflows/ghcr.yml
+    with:
+      tag: toolchain-ubuntu
+      filename: cpp/toolchain/Dockerfile.ubuntu
