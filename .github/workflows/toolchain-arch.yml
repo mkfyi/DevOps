@@ -1,0 +1,13 @@
+name: Arch Linux
+
+on:
+  push:
+    paths:
+      - 'cpp/toolchain/Dockerfile.archlinux'
+
+jobs:
+  toolchain:
+    uses: ./.github/workflows/ghcr.yml
+    with:
+      tag: toolchain-archlinux
+      filename: cpp/toolchain/Dockerfile.archlinux
