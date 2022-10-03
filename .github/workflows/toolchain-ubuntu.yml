@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'cpp/toolchain/Dockerfile.ubuntu'
+  schedule:
+    - cron: '0 2 * * *'
 
 jobs:
   toolchain:
