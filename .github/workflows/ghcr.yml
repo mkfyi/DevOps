@@ -1,0 +1,86 @@
+name: GitHub Container Registry
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+      submodules:
+        required: false
+        type: string
+        default: ''
+
+      filename:
+        required: false
+        type: string
+        default: Dockerfile
+
+      ctx:
+        required: false
+        type: string
+        default: '.'
+
+      cacheFrom:
+        required: false
+        type: string
+        default: ''
+
+      login:
+        required: false
+        type: boolean
+        default: true
+
+      push:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  dockerize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: 🔐 login to container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ inputs.push || inputs.login }}
+
+      - name: 🏗️ setup repository
+        uses: actions/checkout@v3
+        with:
+          submodules: ${{ inputs.submodules }}
+
+      - name: 🛠️ building image
+        shell: bash
+        run: |
+          if [ -z "${{ inputs.cacheFrom }}" ]; then
+            docker build \
+              --tag "ghcr.io/${GH_REPOSITORY,,}:$IMAGE_TAG" \
+              --file "${{ inputs.filename }}" \
+              "${{ inputs.ctx }}"
+          else
+            docker pull "ghcr.io/${GH_REPOSITORY,,}:IMAGE_CACHE_TAG" || true
+            docker build \
+              --cache-from "ghcr.io/${GH_REPOSITORY,,}:$IMAGE_CACHE_TAG" \
+              --tag "ghcr.io/${GH_REPOSITORY,,}:IMAGE_TAG" \
+              --file "${{ inputs.filename }}" \
+              "${{ inputs.ctx }}"
+          fi
+        env:
+          GH_REPOSITORY: ${{ github.repository }}
+          IMAGE_TAG: ${{ inputs.tag }}
+          IMAGE_CACHE_TAG: ${{ inputs.cacheFrom }}
+
+      - name: 🚀 push image into container registry
+        run: docker push "ghcr.io/${GH_REPOSITORY,,}:$IMAGE_TAG"
+        if: ${{ inputs.push }}
+        env:
+          GH_REPOSITORY: ${{ github.repository }}
+          IMAGE_TAG: ${{ inputs.tag }}
