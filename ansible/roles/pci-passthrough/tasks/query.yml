@@ -1,0 +1,18 @@
+---
+- name: (pci-passthrough) lookup for {{ item }}
+  shell: |
+    PCI_ID="$(iommu groups | grep '{{ item }}' | grep -Po '\[([0-9]?|[a-zA-Z]?){4}:([0-9]?|[a-zA-Z]?){4}\]')"
+    if ! test -z "${PCI_ID}"; then
+      echo "${PCI_ID:1:-1}"
+    fi
+  register: pci_query_result
+
+- when: pci_query_result.stdout|length > 0
+  block:
+    - name: (pci-passthrough) Set pci_passthrough_devices artifact
+      set_fact: '{{ pci_query_result.stdout }}'
+      when: pci_passthrough_devices|default('')|length == 0
+
+    - name: (pci-passthrough) Update pci_passthrough_devices artifact
+      set_fact: '{{ pci_passthrough_devices }},{{ pci_query_result.stdout }}'
+      when: pci_passthrough_devices|default('')|length > 0
