@@ -1,0 +1,10 @@
+---
+- name: (GRUB) get the current kernel params
+  shell: |
+    KERNEL_PARAMETERS="$(cat /etc/default/grub | grep '^GRUB_CMDLINE_LINUX_DEFAULT=')"
+    echo "${KERNEL_PARAMETERS:28:-1}"
+  register: kernel_parameters
+
+- name: (GRUB) set kernel_parameters artifact
+  set_fact:
+    kernel_parameters: '{{ kernel_parameters.stdout }}'
