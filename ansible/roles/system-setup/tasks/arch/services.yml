@@ -1,0 +1,6 @@
+---
+- name: (Services) enable on system boot
+  shell: arch-chroot /mnt systemctl enable {{ item }}
+  with_items:
+    - dhcpcd.service
+    - sshd
