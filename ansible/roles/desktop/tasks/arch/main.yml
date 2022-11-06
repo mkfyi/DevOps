@@ -1,0 +1,26 @@
+---
+- import_tasks: fonts.yml
+- import_tasks: xorg.yml
+- import_tasks: gpu.yml
+
+- when: desktop_env|default('')|length > 0
+  block:
+    - import_tasks: kde.yml
+    - import_tasks: xfce.yml
+    - import_tasks: dm.yml
+
+    - name: (Arch) enable NetworkManager service on system start
+      become: yes
+      service:
+        name: NetworkManager
+        enabled: true
+        state: started
+
+- import_tasks: yay.yml
+
+- name: (Arch) Install Mozilla Firefox
+  become: yes
+  pacman:
+    name: firefox
+    state: present
+  when: install_firefox|default(true) == true
