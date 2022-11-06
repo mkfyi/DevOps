@@ -1,0 +1,48 @@
+---
+- name: (Partitioning) wipe install drive and all its partitions
+  shell: find /dev -wholename "{{ sys_install_device }}*" -exec wipefs --force --all {} \;
+  tags:
+    - wipefs
+
+- name: (Partitioning) create efi partition
+  parted:
+    device: '{{ sys_install_device }}'
+    label: gpt
+    number: 1
+    part_end: 101MiB
+    name: efi
+    flags: [boot,esp]
+    state: present
+
+- name: (Partitioning) create boot partition
+  parted:
+    device: '{{ sys_install_device }}'
+    label: gpt
+    number: 2
+    part_start: 101MiB
+    part_end: '{{ (sys_part_boot_size_in_mb+101)|int }}MiB'
+    name: boot
+    state: present
+
+- name: (Partitioning) create root partition
+  parted:
+    device: '{{ sys_install_device }}'
+    label: gpt
+    number: 3
+    part_start: '{{ (sys_part_boot_size_in_mb+101)|int }}MiB'
+    part_end: '{{ system_part_root_size }}'
+    name: root
+    state: present
+
+- name: (Partitioning) determine partition prefix
+  shell: |
+    if [[ "{{ sys_install_device }}" == *"nvme"* ]]; then
+      echo "p"
+    fi
+  register: prefix_shell
+
+- name: (Partitioning) set reusable artifcats
+  set_fact:
+    sys_part_efi: '{{ sys_install_device }}{{ prefix_shell.stdout }}1'
+    sys_part_boot: '{{ sys_install_device }}{{ prefix_shell.stdout }}2'
+    sys_part_root: '{{ sys_install_device }}{{ prefix_shell.stdout }}3'
