@@ -1,0 +1,50 @@
+---
+- name: (IOMMU) check if helper script is present
+  stat:
+    path: /usr/local/bin/iommu
+  register: iommu_helper
+
+- name: (IOMMU) copy helper script
+  copy:
+    src: ../../system-setup/files/iommu
+    dest: /usr/local/bin/iommu
+    owner: root
+    group: root
+    mode: 'a+x'
+  when: iommu_helper.stat.exists == false
+
+- import_tasks: grub/parse-params.yml
+
+- name: (IOMMU) check if {{ cpu_vendor }}_iommu is enabled
+  shell: |
+    [ -z "$(echo $KERNEL_PARAMETERES | grep iommu)" ] && echo "true" || echo "false"
+  environment:
+    KERNEL_PARAMETERS: '{{ kernel_parameters }}'
+  register: iommu_enabled
+
+- name: (IOMMU) set iommu_enabled artifact
+  set_fact:
+    iommu_enabled: '{{ iommu_enabled.stdout }}'
+
+- become: true
+  block:
+    - name: (IOMMU) enable {{ cpu_vendor }}_iommu via kernel parameters
+      lineinfile:
+        dest: /etc/default/grub
+        regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=
+        line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ kernel_parameters }} {{ cpu_vendor }}_iommu=on"'
+      when: iommu_enabled == false
+      register: grub_iommu
+
+    - when: kvm_bar3_fix|default(false) == true
+      block:
+        - include_tasks: grub/parse-params.yml
+        - name: (IOMMU) enable {{ cpu_vendor }}_iommu via kernel parameters
+          lineinfile:
+            dest: /etc/default/grub
+            regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=
+            line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ kernel_parameters }} ideo=efifb:off pci=realloc"'
+          register: grub_vfio_bar3_fix
+
+    - include_tasks: grub/regenerate.yml
+      when: grub_iommu.changed or grub_vfio_bar3_fix.changed|default(false)
