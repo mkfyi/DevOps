@@ -1,0 +1,24 @@
+---
+- name: (Locales) configure locale.gen
+  lineinfile:
+    dest: /mnt/etc/locale.gen
+    regexp: '{{ item.match }}'
+    line: '{{ item.line }}'
+  with_items:
+    - { line: 'en_US.UTF-8 UTF-8', match: 'en_US.UTF-8 UTF-8' }
+    - { line: 'en_GB.UTF-8 UTF-8', match: 'en_GB.UTF-8 UTF-8' }
+
+- name: (Locales) generate configured locales
+  shell: arch-chroot /mnt locale-gen
+
+- name: (Locales) set {{ sys_language }} as system language
+  copy:
+    content: 'LANG={{ sys_language }}'
+    dest: /mnt/etc/locale.conf
+
+- name: (Locales) set {{ sys_keymap }} as default keymap for the root tty
+  copy:
+    content: 'KEYMAP={{ sys_keymap }}'
+    dest: /mnt/etc/vconsole.conf
+    owner: root
+    group: root
