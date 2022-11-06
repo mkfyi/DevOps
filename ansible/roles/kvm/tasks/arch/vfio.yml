@@ -1,0 +1,58 @@
+---
+- name: (vfio) get the current MODULES of mkinitcpio
+  shell: |
+    MKINITCPIO_MODULES="$(cat /etc/mkinitcpio.conf | grep '^MODULES=')"
+    echo "${MKINITCPIO_MODULES:9:-1}"
+  register: mkinitcpio_modules
+
+- name: (vfio) get the current HOOKS of mkinitcpio
+  shell: |
+    MKINITCPIO_HOOKS="$(cat /etc/mkinitcpio.conf | grep '^HOOKS=')"
+    echo "${MKINITCPIO_HOOKS:7:-1}"
+  register: mkinitcpio_hooks
+
+- name: (vfio) set mkinitcpio_hooks and mkinitcpio_modules facts
+  set_fact:
+    mkinitcpio_hooks: '{{ mkinitcpio_hooks.stdout }}'
+    mkinitcpio_modules: '{{ mkinitcpio_modules.stdout }}'
+
+- name: (vfio) check if mkinitcpio contains autodetect hook
+  shell: '[ ! -z "$(echo $MKINITCPIO_HOOKS | grep autodetect)" ] && echo "true" || echo "false"'
+  environment:
+    MKINITCPIO_HOOKS: '{{ mkinitcpio_hooks }}'
+  register: mkinitcpio_has_autodetect_hook
+
+- name: (vfio) check if mkinitcpio contains vfio related modules
+  shell: '[ ! -z "$(echo $MKINITCPIO_MODULES | grep vfio)" ] && echo "true" || echo "false"'
+  environment:
+    MKINITCPIO_MODULES: '{{ mkinitcpio_modules }}'
+  register: mkinitcpio_has_vfio_modules
+
+- name: (vfio) set reusable artifacts
+  set_fact:
+    mkinitcpio_has_autodetect_hook: '{{ mkinitcpio_has_autodetect_hook.stdout }}'
+    mkinitcpio_has_vfio_modules: '{{ mkinitcpio_has_vfio_modules.stdout }}'
+
+- become: true
+  block:
+    - name: (vfio) add autodetect to mkinitcpio HOOKS
+      shell: sed -i 's/autodetect/autodetect modconf/' /etc/mkinitcpio.conf
+      when: mkinitcpio_has_autodetect_hook is false
+      register: modify_mkinitcpio_hooks
+
+    - name: (vfio) bind vfio-pci early
+      shell: sed -i 's/ext4/ext4 vfio_pci vfio vfio_iommu_type1 vfio_virqfd' /etc/mkinitcpio.conf
+      when: mkinitcpio_has_vfio_modules is false
+      register: modify_mkinitcpio_modules
+
+    - name: (vfio) ignoring unknown MSRs accesses
+      copy:
+        content: "options kvm ignore_msrs=1\n"
+        dest: /etc/modprobe.d/kvm.conf
+      register: mkinitcpio_msr_fix
+      when: kvm_ignore_msr|default(false) == true
+
+    - name: (vfio) regenerate initramfs
+      shell: mkinitcpio -P
+      when: modify_mkinitcpio_hooks.changed or modify_mkinitcpio_modules.changed or mkinitcpio_msr_fix.changed|default(false)
+      register: regenerate_initramfs
