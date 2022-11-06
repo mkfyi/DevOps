@@ -1,0 +1,8 @@
+---
+- when: ansible_distribution == 'Archlinux'
+  import_tasks: arch/main.yml
+
+- name: (kvm) reboot system
+  become: true
+  reboot:
+  when: kvm_no_reboot|default(true) == false
