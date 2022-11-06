@@ -1,0 +1,19 @@
+---
+- block:
+    - name: (LUKS) setup {{ sys_part_root }} with aes-xts-plain64
+      shell: |
+        echo -n "{{ sys_luks_password }}" | cryptsetup \
+          -c aes-xts-plain64 \
+          -y \
+          --use-random luksFormat {{ sys_part_root }}
+
+    - name: (LUKS) Open encrypted device
+      shell: |
+        echo -n "{{ sys_luks_password }}" | cryptsetup \
+          luksOpen {{ sys_part_root }} \
+          luks
+
+    - name: (LUKS) define has_luks_device artifact
+      set_fact:
+        has_luks_device: true
+  when: sys_luks_password|default('')|length > 0
