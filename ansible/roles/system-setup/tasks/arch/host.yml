@@ -1,0 +1,30 @@
+---
+- name: (hosts) check if timezone file exists
+  stat:
+    path: /mnt/usr/share/zoneinfo/{{ sys_timezone }}
+  register: timezone_path
+
+- name: (hosts) validate timezone file
+  fail:
+    msg: /usr/share/zoneinfo/{{ sys_timezone }} is not a valid path
+  when: not timezone_path.stat.exists
+
+- name: (hosts) configure {{ sys_timezone }} as timezone
+  shell: arch-chroot /mnt ln -sf /usr/share/zoneinfo/{{ sys_timezone }} /etc/localtime
+
+- name: (hosts) synchronize the clock
+  shell: arch-chroot /mnt hwclock --systohc --utc
+
+- name: (hosts) set {{ sys_hostname }} as hostname
+  copy:
+    content: '{{ sys_hostname }}'
+    dest: /mnt/etc/hostname
+
+- name: (hosts) configure /etc/hosts
+  lineinfile:
+    path: /mnt/etc/hosts
+    line: '{{ item }}'
+  with_items:
+    - "{{ sys_static_ip }}\tlocalhost"
+    - "::1\t\tlocalhost"
+    - "{{ sys_static_ip }}\t{{ sys_hostname }}\t{{ sys_hostname }}"
