@@ -1,0 +1,3 @@
+/host_vars/*.dist
+docker-compose.yml
+docker-compose.override.yml

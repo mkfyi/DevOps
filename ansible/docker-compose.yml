@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+  ansible:
+    image: ghcr.io/mkilian95/devops:ansible
+    container_name: mk_ansible
+    restart: never
+    volumes:
+      - ./host_vars:/ansible/host_vars
