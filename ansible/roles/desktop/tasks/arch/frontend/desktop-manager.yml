@@ -1,0 +1,34 @@
+---
+- name: (DM) install simple desktop display manager (SDDM)
+  become: yes
+  when: desktop_env|default('')|length > 0 and de_wm|default('lightdm') == 'sddm'
+  block:
+    - name: (DM) install SDDM
+      pacman:
+        name: sddm
+        state: present
+
+    - name: (DM) enable service on startup
+      service:
+        name: sddm
+        enabled: true
+        state: started
+
+- name: (DM) install light dispaly manager (LightDM)
+  become: yes
+  when: desktop_env|default('')|length > 0 and de_wm|default('lightdm') == 'lightdm'
+  block:
+    - name: (DM) install LightDM and lightdm-gtk-greeter
+      pacman:
+        name: '{{ item }}'
+        state: present
+      with_items:
+        - lightdm
+        - lightdm-gtk-greeter
+        - lightdm-gtk-greeter-settings
+
+    - name: (DM) enable service on startup
+      service:
+        name: lightdm
+        enabled: true
+        state: started
