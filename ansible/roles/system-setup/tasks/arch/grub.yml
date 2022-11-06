@@ -1,0 +1,67 @@
+---
+- name: (GRUB) install bootloader
+  shell: |
+    arch-chroot /mnt grub-install \
+      --target=x86_64-efi \
+      --efi-directory=/boot/efi \
+      --bootloader-id=ArchLinux \
+      --removable \
+      --recheck \
+      --debug
+
+- name: (GRUB) enable {{ cpu_vendor }}_iommu
+  lineinfile:
+    dest: /mnt/etc/default/grub
+    regexp: ^GRUB_CMDLINE_LINUX_DEFAULT=
+    line: GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet {{ cpu_vendor }}_iommu=on"
+  when: sys_iommu|default(true) == true
+
+- name: (GRUB) set default kernel parameters
+  set_fact:
+    sys_grub_kernel_params: 'root=UUID={{ sys_lvm_root_uuid }} resume=UUID={{ sys_lvm_swap_uuid }}'
+
+- name: (GRUB) modify default configuration template with LUKS support
+  lineinfile:
+    dest: /mnt/etc/default/grub
+    regexp: '{{ item.match }}'
+    line: '{{ item.line }}'
+  with_items:
+    - {
+        match: ^#GRUB_ENABLE_CRYPTODISK=,
+        line: GRUB_ENABLE_CRYPTODISK=y
+      }
+    - {
+        match: ^GRUB_CMDLINE_LINUX=,
+        line: 'GRUB_CMDLINE_LINUX="cryptdevice=UUID={{ sys_part_root_uuid }}:luks {{ sys_grub_kernel_params }}"'
+      }
+  when: has_luks_device is defined
+
+- name: modify default configuration template
+  lineinfile:
+    dest: /mnt/etc/default/grub
+    regexp: '{{ item.match }}'
+    line: '{{ item.line }}'
+  with_items:
+    - {
+        match: ^GRUB_CMDLINE_LINUX=,
+        line: 'GRUB_CMDLINE_LINUX="r{{ sys_grub_kernel_params }}"'
+      }
+  when: has_luks_device is not defined
+
+- include_tasks: generate-grub-kernel-list.yml
+  vars:
+    item: linux
+  when: arch_stock_kernel|default(true) and arch_optional_kernel|default([])|length > 0
+
+- include_tasks: generate-grub-kernel-list.yml
+  with_items:
+    - '{{ arch_optional_kernel }}'
+  when: arch_optional_kernel|default([])|length > 0
+
+- include_tasks: add-grub-entry.yml
+  with_items:
+    '{{ grub_kernels }}'
+  when: grub_kernels|default([])|length > 1
+
+- name: (GRUB) generate /boot/grub/grub.cfg
+  shell: arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg

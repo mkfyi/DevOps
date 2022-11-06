@@ -1,0 +1,13 @@
+---
+- name: (GRUB) create temp bootloader entry file
+  template:
+    src: templates/40.grub.j2
+    dest: /mnt/etc/grub.d/my_custom_entry
+
+- name: (GRUB) append custom entry to 40_custom
+  shell: cat /mnt/etc/grub.d/my_custom_entry >> /mnt/etc/grub.d/40_custom
+
+- name: (GRUB) remove temp bootloader entry file
+  file:
+    path: /mnt/etc/grub.d/my_custom_entry
+    state: absent
