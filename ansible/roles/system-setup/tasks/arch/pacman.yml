@@ -1,0 +1,14 @@
+---
+- name: (pacman) allow parallel downloads
+  lineinfile:
+    dest: /mnt/etc/pacman.conf
+    regexp: ^#Parallel
+    line: ParallelDownloads = 5
+  when: pacman_parallel_downloads|default(true) == true
+
+- name: (pacman) enable colored output
+  lineinfile:
+    dest: /mnt/etc/pacman.conf
+    regexp: ^#Color
+    line: Color
+  when: pacman_color|default(true) == true
