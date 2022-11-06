@@ -7,13 +7,35 @@ ansible_user: root
 ansible_password: ~
 ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
 
-sys_user_name: bob
-sys_user_password: secret
-sys_install_device: /dev/sda
+sys_user_name: michael
+sys_user_password: ~
+sys_install_device: /dev/nvme0n1
 
-# uncomment the following line to encrypt the root partition
+# custom size for the /boot partition (default: 512)
+#sys_part_boot_size_in_mb: 1024
+# custom size for the SWAP file (default: 4)
+#sys_part_swap_size_in_gb: 16
+# modify the root partition size (default: 100%)
+#sys_part_root_size: 880G
+
+# uncomment and modify the value to encrypt the /root partition with luks
 #sys_luks_password: secret
 
 arch_stock_kernel: true
 # uncomment the following line to install another or multiple kernels
 #arch_optional_kernel: [lts, zen]
+
+sys_keymap: de-latin1
+sys_language: en_US.UTF-8
+sys_timezone: Europe/Amsterdam
+
+# enable IOMMU via kernel parameters
+#sys_iommu: true
+# load vfio modules early
+#sys_vfio: true
+
+# see https://github.com/mkilian95/DevOps/tree/main/ansible/roles/pci-passthrough
+#pci_devices_to_isolate:
+#  - RTX 3070
+#  - GA104 High Definition Audio Controller
+#  - VL805/806
