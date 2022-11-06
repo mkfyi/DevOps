@@ -1,0 +1,9 @@
+---
+- name: (yay) copy install_yay to /usr/local/bin
+  become: yes
+  copy:
+    dest: /usr/local/bin/install_yay
+    src: files/arch/install_yay
+    owner: root
+    group: root
+    mode: '0755'
