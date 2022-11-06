@@ -1,0 +1,57 @@
+---
+- name: '(User) create new user account for {{ sys_user_name }}'
+  shell: arch-chroot /mnt useradd -m -g users -G wheel -s /bin/zsh {{ sys_user_name }}
+
+- name: (User) change the user password
+  shell: echo "{{ sys_user_name }}:{{ sys_user_password }}" | arch-chroot /mnt chpasswd
+
+- name: (User) change to root password to the user password
+  shell: echo "root:{{ sys_user_password }}" | arch-chroot /mnt chpasswd
+  when: arch_root_password|default('')|length == 0
+
+- name: (User) change the root password
+  shell: echo "root:{{ arch_root_password }}" | arch-chroot /mnt chpasswd
+  when: arch_root_password|default('')|length > 0
+
+- name: (User) create new group {{ sys_user_name }}
+  shell: arch-chroot /mnt groupadd {{ sys_user_name }}
+
+- name: (User) add group {{ sys_user_name }} to user
+  shell: arch-chroot /mnt usermod -aG {{ sys_user_name }} {{ sys_user_name }}
+
+- name: (User) allow members of group wheel to execute any command
+  lineinfile:
+    dest: /mnt/etc/sudoers
+    regexp: '^# %wheel ALL=(ALL) ALL'
+    line: '%wheel ALL=(ALL) ALL'
+  when: sys_sudo_without_password|default(false) == false
+
+- name: (User) allow members of group wheel to execute any command without password
+  lineinfile:
+    dest: /mnt/etc/sudoers
+    regexp: '^# %wheel ALL=(ALL) NOPASSWD: ALL'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+  when: sys_sudo_without_password|default(false) == true
+
+- name: (User) set {{ sys_language }} as system language
+  copy:
+    content: 'LANG={{ sys_language }}'
+    dest: /mnt/etc/locale.conf
+
+- when: sys_user_public_key|default('')|length > 0
+  block:
+    - name: (User) copy public key
+      copy:
+        content: '{{ sys_user_public_key }}'
+        dest: /mnt/authorized_keys
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: (User) fix ssh related permissions
+      shell: |
+        arch-chroot /mnt mkdir -p /home/{{ sys_user_name }}/.ssh
+        arch-chroot /mnt mv /authorized_keys /home/{{ sys_user_name }}/.ssh
+        arch-chroot /mnt chown -Rh {{ sys_user_name }}:{{ sys_user_name }} /home/{{ sys_user_name }}/.ssh
+        arch-chroot /mnt chmod 700 /home/{{ sys_user_name }}/.ssh
+        arch-chroot /mnt chmod 644 /home/{{ sys_user_name }}/.ssh/authorized_keys
