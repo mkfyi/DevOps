@@ -1,0 +1,12 @@
+---
+- name: Detecting CPU vendor
+  shell: |
+    if [ "$(lscpu | grep GenuineIntel | rev | cut -d ' ' -f 1 | rev)" = 'GenuineIntel' ]; then
+      echo 'intel'
+    else
+      echo 'amd'
+    fi
+  register: cpu_vendor_data
+
+- set_fact:
+    cpu_vendor: '{{ cpu_vendor_data.stdout }}'
