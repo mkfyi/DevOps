@@ -1,0 +1,89 @@
+---
+- name: (Filesystem) create FAT32 EFI partition
+  filesystem:
+    dev: '{{ sys_part_efi }}'
+    fstype: vfat
+    opts: -F32
+    force: yes
+
+- name: (Filesystem) create Ext2 boot parition
+  filesystem:
+    dev: '{{ sys_part_boot }}'
+    fstype: ext2
+    force: yes
+
+- name: (Filesystem) create Ext4 root partition
+  filesystem:
+    dev: /dev/mapper/vg0-root
+    fstype: ext4
+    force: yes
+
+- name: (Filesystem) setup swap area within logical volume vg0-swap
+  shell: mkswap /dev/mapper/vg0-swap
+
+- name: (Filesystem) get UUID of efi partition
+  shell: blkid -s UUID -o value '{{ sys_part_efi }}'
+  changed_when: false
+  register: sys_part_efi_uuid
+
+- name: (Filesystem) get UUID of boot partition
+  shell: blkid -s UUID -o value '{{ sys_part_boot }}'
+  changed_when: false
+  register: sys_part_boot_uuid
+
+- name: (Filesystem) get UUID of root partition
+  shell: blkid -s UUID -o value '{{ sys_part_root }}'
+  changed_when: false
+  register: sys_part_root_uuid
+
+- name: (Filesystem) get UUID of logical volume vg0-root
+  shell: blkid -s UUID -o value /dev/mapper/vg0-root
+  changed_when: false
+  register: sys_lvm_root_uuid
+
+- name: (Filesystem) get UUID of logical volume vg0-swap
+  shell: blkid -s UUID -o value /dev/mapper/vg0-swap
+  changed_when: false
+  register: sys_lvm_swap_uuid
+
+- name: (Filesystem) set reusable artifacts
+  set_fact:
+    sys_part_efi_uuid: '{{ sys_part_efi_uuid.stdout }}'
+    sys_part_boot_uuid: '{{ sys_part_boot_uuid.stdout }}'
+    sys_part_root_uuid: '{{ sys_part_root_uuid.stdout }}'
+    sys_lvm_root_uuid: '{{ sys_lvm_root_uuid.stdout }}'
+    sys_lvm_swap_uuid: '{{ sys_lvm_swap_uuid.stdout }}'
+
+- name: (Filesystem) mount root partition
+  mount:
+    path: /mnt
+    src: UUID={{ sys_lvm_root_uuid }}
+    fstype: ext4
+    state: mounted
+
+- name: (Filesystem) enable swap
+  shell: swapon /dev/mapper/vg0-swap
+
+- name: (Filesystem) create mountpoint for boot partition
+  file:
+    path: /mnt/boot
+    state: directory
+
+- name: (Filesystem) mount boot partition
+  mount:
+    path: /mnt/boot
+    src: UUID={{ sys_part_boot_uuid }}
+    fstype: ext2
+    state: mounted
+
+- name: (Filesystem) create mountpoint for EFI partition
+  file:
+    path: /mnt/boot/efi
+    state: directory
+
+- name: (Filesystem) mount EFI partition
+  mount:
+    path: /mnt/boot/efi
+    src: UUID={{ sys_part_efi_uuid }}
+    fstype: vfat
+    state: mounted
