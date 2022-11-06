@@ -17,3 +17,4 @@ A collection of custom `ansible` playbooks, for:
 
 1. System Setup
     - [Arch Linux](docs/system-setup/arch-linux.md)
+2. [Desktop](roles/desktop/README.md)
