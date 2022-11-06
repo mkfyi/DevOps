@@ -1,0 +1,21 @@
+---
+- name: (LVM) create volume group 'vg0' for LUKS device
+  lvg:
+    vg: vg0
+    pvs: /dev/mapper/luks
+  when: has_luks_device is defined
+
+- name: (LVM) create volume group 'vg0'
+  lvg:
+    vg: vg0
+    pvs: '{{ sys_part_root }}'
+  when: has_luks_device is not defined
+
+- name: (LVM) configure logical volumes
+  lvol:
+    vg: vg0
+    lv: '{{ item.lv }}'
+    size: '{{ item.size }}'
+  with_items:
+    - { lv: swap, size: '{{ sys_part_swap_size_in_gb }}G' }
+    - { lv: root, size: '100%FREE' }
