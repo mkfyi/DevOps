@@ -30,7 +30,7 @@
     label: gpt
     number: 3
     part_start: '{{ (sys_part_boot_size_in_mb+101)|int }}MiB'
-    part_end: '{{ system_part_root_size }}'
+    part_end: '{{ sys_part_root_size }}'
     name: root
     state: present
 

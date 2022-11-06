@@ -41,8 +41,8 @@
 
 - name: Use 100% left as root partition size
   set_fact:
-    system_part_root_size: 100%
-  when: system_part_root_size is not defined
+    sys_part_root_size: 100%
+  when: sys_part_root_size is not defined
 
 - name: Set en_US.UTF-8 as default sys_language
   set_fact:

@@ -7,11 +7,11 @@
 
 - name: (User) change to root password to the user password
   shell: echo "root:{{ sys_user_password }}" | arch-chroot /mnt chpasswd
-  when: arch_root_password|default('')|length == 0
+  when: sys_root_password|default('')|length == 0
 
 - name: (User) change the root password
-  shell: echo "root:{{ arch_root_password }}" | arch-chroot /mnt chpasswd
-  when: arch_root_password|default('')|length > 0
+  shell: echo "root:{{ sys_root_password }}" | arch-chroot /mnt chpasswd
+  when: sys_root_password|default('')|length > 0
 
 - name: (User) create new group {{ sys_user_name }}
   shell: arch-chroot /mnt groupadd {{ sys_user_name }}
