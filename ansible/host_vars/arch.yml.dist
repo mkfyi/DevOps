@@ -1,0 +1,19 @@
+---
+ansible_host: 192.168.122.247
+ansible_user: root
+
+# after booting the arch linux installation media, you need to
+# change the password of the root account and enter it here
+ansible_password: ~
+ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
+
+sys_user_name: bob
+sys_user_password: secret
+sys_install_device: /dev/sda
+
+# uncomment the following line to encrypt the root partition
+#sys_luks_password: secret
+
+arch_stock_kernel: true
+# uncomment the following line to install another or multiple kernels
+#arch_optional_kernel: [lts, zen]
