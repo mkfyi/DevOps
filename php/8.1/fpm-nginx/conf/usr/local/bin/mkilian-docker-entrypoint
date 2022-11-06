@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+NGINX_TEMPLATE_DIR='/etc/nginx/templates'
+
+set -e
+if ! test -z "${1}"; then
+  $@
+else
+  if [ "${NGINX_BUILD_TEMPLATES}" -eq 1 ]; then
+    if [[ -d "${NGINX_TEMPLATE_DIR}" && ! -z "$(ls -A ${NGINX_TEMPLATE_DIR})" ]]; then
+      find "${NGINX_TEMPLATE_DIR}" \
+        -type f \
+        -name '*.conf.template' \
+      | while read template_file; do
+        envsubst \
+          '\$NGINX_DEFAULT_SERVER_PORT \$NGINX_DEFAULT_SERVER_ROOT' \
+        < "${template_file}" > "/etc/nginx/http.d/$(basename ${template_file} .template)"
+      done
+    fi
+  fi
+  exec /usr/bin/supervisord -c "${SUPERVISOR_CONFIG_FILE}"
+fi
