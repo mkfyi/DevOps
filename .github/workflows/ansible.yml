@@ -1,0 +1,15 @@
+name: Ansible
+
+on:
+  push:
+    paths:
+      - 'ansible/**'
+  schedule:
+    - cron: '0 2 * * *'
+
+jobs:
+  toolchain:
+    uses: ./.github/workflows/ghcr.yml
+    with:
+      tag: ansible
+      cwd: ansible
