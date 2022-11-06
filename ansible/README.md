@@ -32,3 +32,4 @@ A collection of custom `ansible` playbooks, for:
     - [Arch Linux](docs/system-setup/arch-linux.md)
 2. [Desktop](roles/desktop/README.md)
 3. [KVM](roles/kvm/README.md)
+4. [PCI Passthrough](roles/pci-passthrough/README.md)
