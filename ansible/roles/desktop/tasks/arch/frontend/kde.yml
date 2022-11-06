@@ -1,0 +1,76 @@
+---
+- become: yes
+  when: desktop_env|default('') == 'kde'
+  block:
+    - name: (KDE) install the base plasma desktop
+      pacman:
+        name: '{{ item }}'
+        state: present
+      with_items:
+        - ark
+        - plasma
+        - plasma-nm
+
+    - name: (KDE) perform full installation
+      pacman:
+        name: kde-applications
+        state: present
+      when: kde_applications|default(false) == true
+
+    - name: (KDE) perform lightweight installation
+      pacman:
+        name: '{{ item }}'
+        state: present
+      with_items:
+        - akonadi-calendar-tools
+        - akonadi-import-wizard
+        - akonadiconsole
+        - akregator
+        - dolphin
+        - dolphin-plugins
+        - ffmpegthumbs
+        - filelight
+        - kalarm
+        - kcalc
+        - kcharselect
+        - kcolorchooser
+        - kcron
+        - kde-dev-utils
+        - kdenlive
+        - kdepim-addons
+        - kdf
+        - kdialog
+        - kfind
+        - kgpg
+        - kleopatra
+        - kmail
+        - kmail-account-wizard
+        - kmix
+        - kompare
+        - konsole
+        - kontact
+        - konversation
+        - kopete
+        - korganizer
+        - krdc
+        - ksystemlog
+        - ktouch
+        - kwalletmanager
+        - kwrite
+        - markdownpart
+        - partitionmanager
+        - svgpart
+        - sweeper
+        - umbrello
+      when: kde_minimal|default(true) == false
+
+    - name: (KDW) perform minimal installation
+      pacman:
+        name: '{{ item }}'
+        state: present
+      with_items:
+        - dolphin
+        - dolphin-plugins
+        - konsole
+        - yakuake
+      when: kde_minimal|default(true) == true
