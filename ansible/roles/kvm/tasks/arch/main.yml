@@ -1,0 +1,8 @@
+---
+- when: sys_iommu|default(false) == true
+  import_tasks: iommu.yml
+
+- when: sys_vfio|default(false) == true
+  import_tasks: vfio.yml
+
+- import_tasks: libvirt.yml
