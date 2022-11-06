@@ -1,10 +1,14 @@
 ---
 ansible_host: 192.168.122.247
+
+# initial root, afterwards must be same as sys_user_name
 ansible_user: root
 
 # after booting the arch linux installation media, you need to
 # change the password of the root account and enter it here
 ansible_password: ~
+
+# ssh-keygen -R {{ ansible_host }}
 ansible_ssh_extra_args: '-o StrictHostKeyChecking=no'
 
 sys_user_name: michael
