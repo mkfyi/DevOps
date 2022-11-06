@@ -1,0 +1,26 @@
+---
+- import_tasks: prerequisites.yml
+- import_tasks: partitioning.yml
+- import_tasks: luks.yml
+- import_tasks: lvm.yml
+- import_tasks: filesystem.yml
+- import_tasks: pacstrap.yml
+- import_tasks: locales.yml
+- import_tasks: host.yml
+- import_tasks: user.yml
+- import_tasks: pacman.yml
+- import_tasks: mkinitcpio.yml
+- import_tasks: grub.yml
+- import_tasks: services.yml
+
+- block:
+    - name: Unmount all partitions
+      shell: umount -R /mnt
+
+    - name: Unmount swap
+      shell: swapoff -a
+
+    - name: Reboot system
+      shell: reboot
+      ignore_errors: true
+      ignore_unreachable: true
