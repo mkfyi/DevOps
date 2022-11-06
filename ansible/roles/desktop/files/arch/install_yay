@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+if hash yay 2> /dev/null; then
+  printf -- "\033[1;32myay\033[0m is already installed.\n"
+  exit 1
+fi
+
+cd /opt
+
+[[ ! -d /opt/yay ]] && {
+  sudo git clone https://aur.archlinux.org/yay.git;
+  sudo chown -Rh $USER:$USER yay
+}
+
+cd yay && makepkg -si
+cd ~ && sudo rm -rf /opt/yay
+
+sudo rm /usr/local/bin/install_yay
