@@ -1,0 +1,47 @@
+---
+- name: (Xfce) base and plugin installation
+  become: yes
+  when: desktop_env|default('') == 'xfce'
+  block:
+    - name: Install Xfce4 with basic plugins
+      pacman:
+        name: '{{ item }}'
+        state: present
+      with_items:
+        - xfce4
+        - arc-gtk-theme
+        - ristretto
+        - xfce4-datetime-plugin
+        - xfce4-mount-plugin
+        - xfce4-netload-plugin
+        - xfce4-notifyd
+        - xfce4-pulseaudio-plugin
+        - xfce4-screensaver
+        - xfce4-taskmanager
+        - xfce4-wavelan-plugin
+        - xfce4-weather-plugin
+        - xfce4-whiskermenu-plugin
+        - thunar-archive-plugin
+        - thunar-media-tags-plugin
+        - xarchiver
+        - networkmanager
+        - pulseaudio
+        - pulseaudio-alsa
+        - pulseaudio-bluetooth
+        - network-manager-applet
+        - paprefs
+        - pavucontrol
+        - libcanberra
+        - libcanberra-pulse
+        - capitaine-cursors
+        - xdg-user-dirs-gtk
+        - parole
+
+    - name: (Xfce) install notebook utilities
+      pacman:
+        name: '{{ item }}'
+        state: present
+      with_items:
+        - xfce4-battery-plugin
+        - xfce4-xkb-plugin
+      when: sys_notebook|default(false) == true
