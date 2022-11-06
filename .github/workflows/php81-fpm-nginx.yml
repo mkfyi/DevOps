@@ -8,7 +8,7 @@ on:
     - cron: '0 4 * * *'
 
 jobs:
-  toolchain:
+  php81-fpm-nginx:
     uses: ./.github/workflows/ghcr.yml
     with:
       tag: php8.1-fpm-nginx
