@@ -1,0 +1,21 @@
+---
+- name: (mkinitcpio) modify HOOKS and MODULES
+  vars:
+    mkinitcpio_hooks: "{{ 'encrypt lvm2 resume' if (has_luks_device|default(false)) else 'lvm2 resume' }}"
+    mkinitcpio_modules: "{{ 'ext4 vfio_pci vfio vfio_iommu_type1 vfio_virqfd' if (sys_vfio|default(false)) else 'ext4' }}"
+  lineinfile:
+    dest: /mnt/etc/mkinitcpio.conf
+    regexp: '{{ item.match }}'
+    line: '{{ item.line }}'
+  with_items:
+    - {
+        match: ^MODULES=,
+        line: 'MODULES=({{ mkinitcpio_modules }})'
+      }
+    - {
+        match: ^HOOKS=,
+        line: 'HOOKS=(base udev autodetect modconf block keymap {{ mkinitcpio_hooks }} filesystems keyboard fsck)'
+      }
+
+- name: (mkinicpio) regenerate initramfs for all available kernels
+  shell: arch-chroot /mnt mkinitcpio -P
