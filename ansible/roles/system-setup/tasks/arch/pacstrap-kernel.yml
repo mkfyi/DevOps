@@ -1,0 +1,7 @@
+- name: (pacstrap-kernel) set kernel_prefix fact based on item name
+  set_fact:
+    kernel_prefix: '{{ "" if (item == "linux") else "linux-" }}'
+
+- name: (pacstrap-kernel) add {{ item }} and {{ item }}-headers to pacstrap list
+  set_fact:
+    pacstrap_kernel: '{{ pacstrap_kernel|default("") }} {{ kernel_prefix }}{{ item }} {{ kernel_prefix }}{{ item }}-headers'

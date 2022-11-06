@@ -1,0 +1,59 @@
+---
+- name: (pacstrap) allow parallel downloads for install media
+  lineinfile:
+    dest: /etc/pacman.conf
+    regexp: ^#Parallel
+    line: ParallelDownloads = 5
+
+- name: (pacstrap) Add stock kernel and headers
+  include_tasks: pacstrap-kernel.yml
+  with_items:
+    - linux
+  when: arch_stock_kernel|default(true) is true
+
+- include_tasks: pacstrap-kernel.yml
+  with_items:
+    - '{{ arch_optional_kernel }}'
+  when: arch_optional_kernel|default([])|length > 0
+
+- name: (pacstrap) fail if no kernel is defined in configuration
+  fail:
+    msg: enable stock kernel or add at least one custom kernel
+  when: pacstrap_kernel is not defined
+
+- name: (pacstrap) set all wanted packages as reusable artifact
+  set_fact:
+    packstrap_packages:
+      - archlinux-keyring
+      - base
+      - base-devel
+      - dhcpcd
+      - efibootmgr
+      - git
+      - gptfdisk
+      - grub-efi-x86_64
+      - lvm2
+      - "{{ pacstrap_kernel }}"
+      - linux-firmware
+      - openssh
+      - zsh
+      - vim
+      - '{{ cpu_vendor }}-ucode'
+
+- name: (pacstrap) installing the base system
+  shell: pacstrap /mnt {{ packstrap_packages|join(' ') }}
+
+- name: (pacstrap) replace vi with vim
+  shell: arch-chroot /mnt ln -s /usr/bin/vim /usr/bin/vi
+  when: sys_vim_as_vi|default(true) == true
+
+- name: (pacstrap) installing notebook related utilities
+  shell: pacstrap /mnt mousepad leafpad
+  when: sys_notebook is defined and sys_notebook == true
+
+- name: (pacstrap) installing wifi related utilities
+  shell: pacstrap /mnt dialog wireless_tools iw crda wpa_supplicant
+  when: sys_notebook is defined and sys_notebook == true
+
+- name: (pacstrap) generate fstab file
+  shell: genfstab -U /mnt >> /mnt/etc/fstab
