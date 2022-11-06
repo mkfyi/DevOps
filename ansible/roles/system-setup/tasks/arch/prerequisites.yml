@@ -1,0 +1,80 @@
+---
+- name: Check if required variables are defined
+  assert:
+    that:
+      - sys_user_name is defined
+      - sys_user_password is defined
+      - sys_install_device is defined
+
+- name: Test sys_install_device against RegExp patterns
+  fail:
+    msg: Your install_device ({{ sys_install_device }}) does not match RegExp patterns
+  when: |
+    not (sys_install_device | regex_search("^\/dev\/sd[a-z]$"))
+    and not (sys_install_device | regex_search("^\/dev\/nvme\dn\d$"))
+
+- name: Test is sys_install_device is a valid device
+  shell: |
+    if test -e "{{ sys_install_device }}"; then
+      echo "true"
+    else
+      echo "false"
+    fi
+  register: sys_install_device_exists
+
+- set_fact:
+    sys_install_device_exists: '{{ sys_install_device_exists.stdout }}'
+
+- fail:
+    msg: '{{ sys_install_device }} is not a valid device'
+  when: not sys_install_device_exists
+
+- name: Set 512MB as default boot partition size
+  set_fact:
+    sys_part_boot_size_in_mb: 512
+  when: sys_part_boot_size_in_mb is not defined
+
+- name: Set 4G as default swap partition size
+  set_fact:
+    sys_part_swap_size_in_gb: 4
+  when: sys_part_swap_size_in_gb is not defined
+
+- name: Use 100% left as root partition size
+  set_fact:
+    system_part_root_size: 100%
+  when: system_part_root_size is not defined
+
+- name: Set en_US.UTF-8 as default sys_language
+  set_fact:
+    sys_language: en_US.UTF-8
+  when: sys_language is not defined
+
+- name: Set de-latin1 as default keymap for the root shell
+  set_fact:
+    sys_keymap: de-latin1
+  when: not sys_keymap is defined
+
+- name: Disable notebook support by default
+  set_fact:
+    sys_notebook: false
+  when: sys_notebook is not defined
+
+- name: Set {{ inventory_hostname }} as default value for sys_hostname
+  set_fact:
+    sys_hostname: '{{ inventory_hostname }}'
+  when: not sys_hostname is defined
+
+- name: Set Europe/Amsterdam as default timezone for sys_timezone
+  set_fact:
+    sys_timezone: Europe/Amsterdam
+  when: not sys_timezone is defined
+
+- name: Set 127.0.0.1 as default IP for sys_static_ip
+  set_fact:
+    sys_static_ip: 127.0.0.1
+  when: not sys_static_ip is defined
+
+- name: Disable WIFI support by default
+  set_fact:
+    sys_wifi: false
+  when: sys_wifi is not defined
