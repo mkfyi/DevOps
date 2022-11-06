@@ -33,6 +33,25 @@ sys_keymap: de-latin1
 sys_language: en_US.UTF-8
 sys_timezone: Europe/Amsterdam
 
+# must be intel or nvidia
+#gpu_vendor: nvidia
+#gpu_nvidia_proprietary: yes
+#gpu_nvidia_dkms: yes
+
+# must be kde or xfce
+desktop_env: xfce
+# must be lighdm or sddm
+#de_wm: lightdm
+kde_applications: false
+kde_minimal: true
+install_firefox: true
+
+# run libvirtd.service as $USER
+kvm_fix_permissions: true
+# run swtpm as swtpm:swptm
+tpm_fix_permissions: true
+
+
 # enable IOMMU via kernel parameters
 #sys_iommu: true
 # load vfio modules early
