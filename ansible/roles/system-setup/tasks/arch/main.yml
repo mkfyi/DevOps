@@ -13,6 +13,15 @@
 - import_tasks: grub.yml
 - import_tasks: services.yml
 
+- name: (Arch) copy IOMMU helper scripts
+  copy:
+    src: iommu
+    dest: /usr/local/bin/iommu
+    owner: root
+    group: root
+    mode: 'a+x'
+  when: sys_iommu|default(false) == true
+
 - block:
     - name: Unmount all partitions
       shell: umount -R /mnt
