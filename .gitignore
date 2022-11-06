@@ -6,3 +6,4 @@
 *.log
 /ansible/host_vars/*
 !/ansible/host_vars/*.dist
+ansible/docker-compose.override.yml
