@@ -1,0 +1,12 @@
+menuentry 'Arch Linux {% if item.stock == false %}{{ item.name|upper }}{% else %}Stock{% endif %}'{
+	load_video
+	set gfxpayload=keep
+	insmod gzio
+	insmod part_gpt
+	insmod ext2
+	search --no-floppy --fs-uuid --set=root {{ sys_part_boot_uuid }}
+	echo	'Loading Linux {{ item.name|lower }} ...'
+  linux /vmlinuz-linux{% if item.stock == false %}-{{ item.name|lower }}{% endif %} {% if has_luks_device|default(false) %}cryptdevice=UUID={{ sys_part_root_uuid }}:luks {% endif %}{{ sys_grub_kernel_params }}
+	echo	'Loading initial ramdisk ...'
+	initrd	/{{ cpu_vendor }}-ucode.img /initramfs-linux{% if item.stock == false %}-{{ item.name|lower }}{% endif %}.img
+}
