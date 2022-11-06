@@ -1,0 +1,3 @@
+---
+- when: ansible_distribution == 'Archlinux'
+  import_tasks: arch/main.yml
