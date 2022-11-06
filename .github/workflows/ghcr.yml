@@ -7,6 +7,11 @@ on:
         required: true
         type: string
 
+      cwd:
+        required: false
+        type: string
+        default: ''
+
       submodules:
         required: false
         type: string
@@ -70,6 +75,9 @@ jobs:
       - name: 🛠️ building image
         shell: bash
         run: |
+          if ! test -z "${{ inputs.cwd }}"; then
+            cd "${{ inputs.cwd }}"
+          fi
           if [ -z "${{ inputs.cacheFrom }}" ]; then
             docker build \
               --tag "ghcr.io/${GH_REPOSITORY,,}:$IMAGE_TAG" \
