@@ -1,0 +1,14 @@
+---
+- name: (X11) Install XServer and XDisplayManager
+  become: yes
+  pacman:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - xorg-server
+    - xorg-apps
+    - xorg-xinit
+    - xterm
+    - xorg-fonts-100dpi
+    - xorg-fonts-75dpi
+    - autorandr
