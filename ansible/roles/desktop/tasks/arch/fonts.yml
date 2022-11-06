@@ -1,0 +1,11 @@
+---
+- name: (Fonts) install a few fonts
+  become: yes
+  pacman:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - gnu-free-fonts
+    - ttf-dejavu
+    - ttf-liberation
+    - noto-fonts-emoji
