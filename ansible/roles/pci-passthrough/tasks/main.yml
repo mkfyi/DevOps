@@ -1,0 +1,41 @@
+---
+- name: (pci-passthrough) check if pci_devices_to_isolate is defined
+  assert:
+    that:
+      - pci_devices_to_isolate is defined
+
+- become: true
+  block:
+    - name: (pci-passthrough) check if IOMMU is enabled
+      shell: '[ ! -z "$(iommu dmesg | grep "IOMMU enabled")" ] && echo "true" || echo "false"'
+      register: iommu_enabled
+
+    - set_fact:
+        iommu_enabled: '{{ iommu_enabled.stdout }}'
+
+    - name: (pci-passthrough) fail if IOMMU isn't enabled
+      fail:
+        msg: Missing {{ cpu_vendor }}_iommu=on kernel parameter
+      when: iommu_enabled != true
+
+    - include_tasks: query.yml
+      with_items: '{{ pci_devices_to_isolate }}'
+
+    - name: (pci-passthrough) validate collected PCI ids
+      fail:
+        msg: Unable to collect PCIe ids
+      when: pci_passthrough_devices|default('')|length == 0
+
+    - name: (pci-passthrough) isolate PCI devices
+      copy:
+        content: "options vfio-pci ids={{ pci_passthrough_devices }}\n"
+        dest: /etc/modprobe.d/vfio.conf
+      register: vfio_isolated
+
+    - name: (pci-passthrough) regenerate initramfs
+      shell: mkinitcpio -P
+      when: vfio_isolated.changed
+
+    - name: (pci-passthrough) reboot system
+      reboot:
+      when: kvm_no_reboot|default(true) == false
