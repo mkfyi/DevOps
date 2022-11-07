@@ -27,5 +27,6 @@
 |`sys_static_ip`|❌|`127.0.0.1`|For a system with a permanent IP address, replace `127.0.1.1` with that permanent IP address
 |`sys_vfio`|❌|`false`|Load vfio-pci early using `mkinitcoio`
 |`sys_iommu`|❌|`false`|Enable `iommu` via GRUB kernel parameters
+|`sys_docker`|❌|`false`|Install `docker`, `docker-compose` and enable `docker.service` on system boot
 |`pacman_parallel_downloads`|❌|`true`|Enables parallel downloads (5) via pacman
 |`pacman_color`|❌|`true`|Activates a colored output from pacman
