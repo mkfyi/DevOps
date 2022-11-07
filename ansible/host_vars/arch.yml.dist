@@ -32,6 +32,7 @@ arch_stock_kernel: true
 sys_keymap: de-latin1
 sys_language: en_US.UTF-8
 sys_timezone: Europe/Amsterdam
+sys_docker: true
 
 # must be intel or nvidia
 #gpu_vendor: nvidia
