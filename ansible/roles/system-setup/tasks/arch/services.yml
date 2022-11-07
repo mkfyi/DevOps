@@ -1,6 +1,10 @@
 ---
-- name: (Services) enable on system boot
-  shell: arch-chroot /mnt systemctl enable {{ item }}
+- include_tasks: enable-service.yml
   with_items:
     - dhcpcd.service
     - sshd
+
+- include_tasks: enable-service.yml
+  with_items:
+    - docker.service
+  when: sys_docker|default(false) == true

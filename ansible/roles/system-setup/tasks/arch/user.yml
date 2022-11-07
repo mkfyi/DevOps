@@ -19,6 +19,10 @@
 - name: (User) add group {{ sys_user_name }} to user
   shell: arch-chroot /mnt usermod -aG {{ sys_user_name }} {{ sys_user_name }}
 
+- name: (User) add group docker to user
+  shell: arch-chroot /mnt usermod -aG docker {{ sys_user_name }}
+  when: sys_docker|default(false) == true
+
 - name: (User) allow members of group wheel to execute any command
   lineinfile:
     dest: /mnt/etc/sudoers

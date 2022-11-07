@@ -1,0 +1,3 @@
+---
+- name: (Service) enable {{ item }} on system boot
+  shell: arch-chroot /mnt systemctl enable {{ item }}

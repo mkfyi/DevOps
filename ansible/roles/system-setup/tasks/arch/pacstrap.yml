@@ -43,6 +43,10 @@
 - name: (pacstrap) installing the base system
   shell: pacstrap /mnt {{ packstrap_packages|join(' ') }}
 
+- name: (pacstrap) install docker and docker-compose
+  shell: pacstrap /mnt docker docker-compose
+  when: sys_docker|default(false) == true
+
 - name: (pacstrap) replace vi with vim
   shell: arch-chroot /mnt ln -s /usr/bin/vim /usr/bin/vi
   when: sys_vim_as_vi|default(true) == true
