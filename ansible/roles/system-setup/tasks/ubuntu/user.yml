@@ -1,0 +1,51 @@
+---
+- name: (User) update root password
+  user:
+    name: root
+    update_password: always
+    password:
+  when: cloud_root_password|default('')|length > 0
+
+- name: '(User) create account: {{ cloud_user_name }}'
+  user:
+    name: '{{ cloud_user_name }}'
+    password: '{{ cloud_user_password }}'
+    groups: users,www-data
+    state: present
+    shell: '{{ cloud_user_shell|default("/usr/bin/zsh") }}'
+
+- name: '(User) create .ssh directory for {{ cloud_user_name }}'
+  file:
+    path: '/home/{{ cloud_user_name }}/.ssh'
+    owner: '{{ cloud_user_name }}'
+    group: '{{ cloud_user_name }}'
+    mode: '0700'
+    state: directory
+
+- stat:
+    path: /home/{{ cloud_user_name }}/.ssh/authorized_keys
+  register: ssh_keys
+
+- name: '(User) create authorized_keys file for {{ cloud_user_name }}'
+  file:
+    path: /home/{{ cloud_user_name }}/.ssh/authorized_keys
+    owner: '{{ cloud_user_name }}'
+    group: '{{ cloud_user_name }}'
+    mode: '0644'
+    state: '{{ "file" if ssh_keys.stat.exists else "touch" }}'
+
+- name: '(User) add public keys for {{ cloud_user_name }}'
+  authorized_key:
+    user: '{{ cloud_user_name }}'
+    state: present
+    key: '{{ item }}'
+  with_items:
+    - '{{ cloud_user_public_key }}'
+  when: cloud_user_public_key|default([])|length > 0
+
+- name: '(User) add groups to user {{ cloud_user_name }}'
+  shell: usermod -aG {{ item }} {{ cloud_user_name }}
+  with_items:
+    - docker
+    - sudo
+    - www-data

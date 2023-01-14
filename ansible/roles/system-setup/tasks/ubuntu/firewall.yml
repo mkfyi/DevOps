@@ -1,0 +1,25 @@
+- become: true
+  block:
+    - name: (Firewall) setup uncompilcated firewall
+      shell: |
+        ufw logging on
+        ufw default deny incoming
+        ufw default allow outgoing
+        ufw allow ssh/tcp
+        ufw allow 80/tcp
+        ufw allow 443/tcp
+
+    - name: (Firewall) allow custom SSH port
+      shell: ufw allow {{ cloud_ssh_port|default(22) }}/tcp
+      when: cloud_ssh_port|default(22) != 22
+
+    - name: (Firewall) open ports for docker swarm cluster
+      shell: |
+        ufw allow 2377/tcp
+        ufw allow 7946/tcp
+        ufw allow 7946/udp
+        ufw allow 4789/udp
+      when: cloud_docker_swarm|default(false) == true
+
+    - name: (Firewall) enable uncompilcated firewall
+      shell: ufw --force enable

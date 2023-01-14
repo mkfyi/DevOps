@@ -2,3 +2,7 @@
 - name: (Setup) Install Arch Linux
   include_tasks: arch/main.yml
   when: ansible_nodename == 'archiso'
+
+- name: (Setup) Ubuntu
+  include_tasks: ubuntu/main.yml
+  when: ansible_distribution == 'Ubuntu'

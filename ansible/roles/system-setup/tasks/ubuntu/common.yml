@@ -1,0 +1,134 @@
+---
+- become: true
+  block:
+
+    - name: (common) install language-pack-en
+      apt:
+        name: '{{ packages }}'
+        update_cache: yes
+        state: latest
+        force: yes
+      vars:
+        packages:
+          - software-properties-common
+          - language-pack-en-base
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      register: locale_apt
+
+    - name: (common) set timezone to Europe/Berlin
+      shell: timedatectl set-timezone Europe/Berlin
+      when: locale_apt is succeeded
+      register: locale_tz
+
+    - name: (common) update locale and set default language to en_US.UTF-8
+      shell: update-locale LC_ALL="en_US.UTF-8" LANG="en_US.UTF-8"
+      environment:
+        LC_ALL: en_US.UTF-8
+        LANG: en_US.UTF-8
+      when: locale_tz is succeeded
+
+    - name: (common) updating sources.list for apt
+      shell: |
+        cat <<EOF > /etc/apt/sources.list
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }} main restricted universe multiverse
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }}-updates main restricted universe multiverse
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }}-backports main restricted universe multiverse
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }}-security main restricted universe multiverse
+        EOF
+
+    - name: (common) updating default dpkg options for apt
+      shell: |
+        cat <<'EOF' > /etc/apt/apt.conf.d/local
+        Dpkg::Options {
+           "--force-confdef";
+           "--force-confold";
+        }
+        EOF
+
+    - name: (common) apt update
+      apt:
+        update_cache: true
+
+    - name: (common) apt dist-upgrade
+      apt:
+        upgrade: dist
+
+    - name: (common) apt autoremove
+      apt:
+        autoremove: true
+
+    - name: (common) install or update a list of packages
+      apt:
+        name: '{{ packages }}'
+        update_cache: true
+        state: latest
+        force: yes
+      vars:
+        packages:
+          - autoconf
+          - automake
+          - borgbackup
+          - build-essential
+          - checkinstall
+          - curl
+          - dbus
+          - docker-compose
+          - docker.io
+          - gettext
+          - git
+          - gnupg
+          - htop
+          - iftop
+          - jq
+          - landscape-common
+          - libtool
+          - m4
+          - man
+          - mosh
+          - musl-tools
+          - ncurses-term
+          - netcat
+          - ntp
+          - pax
+          - pkg-config
+          - python3
+          - python3-pip
+          - rclone
+          - rsync
+          - secure-delete
+          - software-properties-common
+          - sudo
+          - tmux
+          - tree
+          - ufw
+          - vim
+          - wget
+          - wireguard-tools
+          - zsh
+
+    - name: (apt) install or update a list of development packages
+      when: cloud_dev_packages|default(false) == true
+      apt:
+        name: '{{ packages }}'
+        update_cache: true
+        state: latest
+        force: yes
+      vars:
+        packages:
+          - clang
+          - cmake
+          - gcc
+          - libcrypto++-dev
+          - libcurl4-openssl-dev
+          - libevent-dev
+          - libgd-dev
+          - libgeoip-dev
+          - libiw-dev
+          - libnghttp2-dev
+          - libprotobuf-dev
+          - libsqlite3-dev
+          - libssl-dev
+          - libz-dev
+          - ncurses-dev
+          - python3-dev

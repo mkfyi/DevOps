@@ -1,0 +1,8 @@
+---
+- import_tasks: common.yml
+- import_tasks: firewall.yml
+- import_tasks: ssh.yml
+- import_tasks: user.yml
+
+- name: (Ubuntu) reboot
+  reboot:

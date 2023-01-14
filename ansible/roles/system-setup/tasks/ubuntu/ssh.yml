@@ -1,0 +1,88 @@
+---
+- name: (ssh) check if new SSH keys have already been generated
+  stat:
+    path: /etc/ssh/.ansible-ssh-setup
+  register: generated_ssh_keys
+
+- become: true
+  block:
+    - when: not generated_ssh_keys.stat.exists
+      block:
+        - name: (ssh) generate new SSH keys
+          shell: |
+            cd /etc/ssh
+            shred -u ssh_host_*key*
+            ssh-keygen -t ed25519 -f ssh_host_ed25519_key -N ''
+            ssh-keygen -t rsa -b 4096 -f ssh_host_rsa_key -N ''
+          register: ssh_key_generation
+
+        - name: (ssh) print stdout of previous task
+          debug:
+            msg: '{{ ssh_key_generation.stdout }}'
+
+        - name: (ssh) create lock file
+          file:
+            path: /etc/ssh/.ansible-ssh-setup
+            owner: root
+            group: root
+            mode: '0644'
+            state: touch
+
+    - name: (ssh) update SSH daemon configuration
+      shell: |
+        cat <<'EOF' > /etc/ssh/sshd_config
+        HostKey /etc/ssh/ssh_host_ed25519_key
+        HostKey /etc/ssh/ssh_host_rsa_key
+
+        Port 22
+        LogLevel VERBOSE
+
+        RekeyLimit 1G 1H
+        KexAlgorithms curve25519-sha256@libssh.org
+        MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+        Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+
+        MaxAuthTries 2
+        MaxSessions 5
+        ClientAliveInterval 30
+        ClientAliveCountMax 6
+        TCPKeepAlive no
+        UsePAM yes
+
+        PasswordAuthentication no
+        ChallengeResponseAuthentication no
+        PubkeyAuthentication yes
+        AuthenticationMethods publickey
+        PermitRootLogin yes
+
+        AllowAgentForwarding yes
+        AllowTcpForwarding yes
+        X11Forwarding yes
+        PrintMotd no
+        Compression no
+        StreamLocalBindUnlink yes
+
+        Subsystem sftp internal-sftp
+        EOF
+
+    - name: (ssh) update SSH configuration file
+      shell: |
+        cat <<'EOF' > /etc/ssh/ssh_config
+        HashKnownHosts yes
+        HostKeyAlgorithms ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ssh-ed25519,ssh-rsa
+        KexAlgorithms curve25519-sha256@libssh.org
+        MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com
+        Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+        EOF
+
+    - name: (ssh) update SSH port
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: '^Port\s\d+?$'
+        line: "Port {{ cloud_ssh_port }}"
+      when: cloud_ssh_port|default(22) != 22
+
+    - name: (ssh) restart SSH daemon
+      service:
+        name: sshd
+        state: restarted

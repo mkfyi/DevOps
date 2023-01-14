@@ -1,0 +1,81 @@
+---
+- become: true
+  block:
+    - name: (apt) updating sources.list
+      shell: |
+        cat <<EOF > /etc/apt/sources.list
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }} main restricted universe multiverse
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }}-updates main restricted universe multiverse
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }}-backports main restricted universe multiverse
+        deb mirror://mirrors.ubuntu.com/mirrors.txt {{ ansible_distribution_release }}-security main restricted universe multiverse
+        EOF
+
+    - name: (apt) updating default dpkg options
+      shell: |
+        cat <<'EOF' > /etc/apt/apt.conf.d/local
+        Dpkg::Options {
+           "--force-confdef";
+           "--force-confold";
+        }
+        EOF
+
+    - name: (apt) update
+      apt:
+        update_cache: true
+
+    - name: (apt) dist-upgrade
+      apt:
+        upgrade: dist
+
+    - name: (apt) autoremove
+      apt:
+        autoremove: true
+
+    - name: (apt) install or update a list of packages
+      apt:
+        name: '{{ packages }}'
+        update_cache: true
+        state: latest
+        force: yes
+      vars:
+        packages:
+          - autoconf
+          - automake
+          - borgbackup
+          - build-essential
+          - checkinstall
+          - curl
+          - dbus
+          - docker-compose
+          - docker.io
+          - gettext
+          - git
+          - gnupg
+          - htop
+          - iftop
+          - jq
+          - landscape-common
+          - libtool
+          - m4
+          - man
+          - mosh
+          - musl-tools
+          - ncurses-term
+          - netcat
+          - ntp
+          - pax
+          - pkg-config
+          - python3
+          - python3-pip
+          - rclone
+          - rsync
+          - secure-delete
+          - software-properties-common
+          - sudo
+          - tmux
+          - tree
+          - ufw
+          - vim
+          - wget
+          - wireguard-tools
+          - zsh
